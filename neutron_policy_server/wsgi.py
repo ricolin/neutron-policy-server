@@ -200,7 +200,11 @@ def enforce_port_update():
 def enforce_port_delete():
     # Check only IP address if strict is 0
     strict = bool(request.args.get("strict", default=1, type=int))
+    LOG.info(f"strict: {strict}")
     fixed_ips = [str(fixed_ip["ip_address"]) for fixed_ip in g.target["fixed_ips"]]
+    LOG.info(f"fixed_ips: {fixed_ips}")
+    LOG.info(f"g.target['fixed_ips']: {g.target['fixed_ips']}")
+
     with db_api.CONTEXT_READER.using(g.ctx):
         query = g.ctx.session.query(models.AllowedAddressPair).filter(
             models.AllowedAddressPair.ip_address.in_(fixed_ips)
@@ -212,11 +216,12 @@ def enforce_port_delete():
                 )
             )
 
-    pairs = query.all()
     pairs = [
         aap_obj.AllowedAddressPair._load_object(context, db_obj)
         for db_obj in query.all()
     ]
+    LOG.info(f"pairs: {pairs}")
+    LOG.info(f"query.all(): {query.all()}")
     if len(pairs) > 0:
         msg = f"Address pairs dependency found for port: {g.target['id']}"
         LOG.info(msg)
